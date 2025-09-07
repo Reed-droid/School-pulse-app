@@ -8,11 +8,11 @@ const SplashScreen = () => {
   const navigation = useNavigation();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      navigation.replace('Login');
-    }, 5000);  // 5 seconds
-    return () => clearTimeout(timer);
-  }, [navigation]);
+  const timer = setTimeout(() => {
+    navigation.replace('Login');
+  }, 100); // 0.1 seconds instead of 4 seconds
+  return () => clearTimeout(timer);
+}, [navigation]);
 
   return (
     <View style={styles.container}>
