@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 const DashboardScreen = ({ route }) => {
   const navigation = useNavigation();
-  const { userRole } = route.params || { userRole: 'teacher' }; // Default to teacher if no role passed
+  const { userRole } = route.params || { userRole: 'teacher' };
 
   // Sample data - will come from backend later
   const dashboardData = {
@@ -78,6 +78,16 @@ const DashboardScreen = ({ route }) => {
         >
           <Text style={styles.buttonText}>Report Positive Action</Text>
         </TouchableOpacity>
+
+        {/* Admin Only Button */}
+        {userRole === 'administrator' || userRole === 'principal' ? (
+          <TouchableOpacity 
+            style={styles.adminButton}
+            onPress={() => navigation.navigate('AdminInsights')}
+          >
+            <Text style={styles.buttonText}>View Insights</Text>
+          </TouchableOpacity>
+        ) : null}
       </View>
 
       {/* Footer */}
@@ -192,6 +202,14 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     alignItems: 'center',
+    marginBottom: 10,
+  },
+  adminButton: {
+    backgroundColor: '#3a0ca3',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 10,
   },
   buttonText: {
     color: 'white',
