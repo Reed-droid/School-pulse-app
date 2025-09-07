@@ -1,230 +1,222 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { getInsights } from '../services/api';
 
-const DashboardScreen = ({ route }) => {
-  const navigation = useNavigation();
-  const { userRole } = route.params || { userRole: 'teacher' };
+export default function DashboardScreen({ navigation }) {
+  const [insights, setInsights] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Sample data - will come from backend later
-  const dashboardData = {
-    teacher: {
-      welcome: "Welcome back, Teacher!",
-      tasks: ["Grade assignments", "Update lesson plans", "Meet with students"],
-      stats: { pendingTasks: 5, completed: 12 }
-    },
-    principal: {
-      welcome: "Principal Dashboard",
-      tasks: ["Review staff reports", "Budget planning", "School events"],
-      stats: { pendingApprovals: 8, meetings: 3 }
-    },
-    administrator: {
-      welcome: "Administration Portal", 
-      tasks: ["Process requests", "Manage resources", "Generate reports"],
-      stats: { pendingRequests: 15, resolved: 25 }
+  useEffect(() => {
+    loadInsights();
+  }, []);
+
+  const loadInsights = async () => {
+    try {
+      setRefreshing(true);
+      const data = await getInsights();
+      setInsights(data);
+    } catch (error) {
+      console.error('Failed to load insights:', error);
+      alert('Failed to load dashboard data. Check backend connection.');
+    } finally {
+      setRefreshing(false);
     }
   };
 
-  const data = dashboardData[userRole] || dashboardData.teacher;
+  const StatCard = ({ title, value, color = '#007AFF' }) => (
+    <View style={[styles.statCard, { borderLeftColor: color }]}>
+      <Text style={styles.statValue}>{value}</Text>
+      <Text style={styles.statTitle}>{title}</Text>
+    </View>
+  );
+
+  if (!insights) {
+    return (
+      <View style={styles.center}>
+        <Text>Loading dashboard...</Text>
+      </View>
+    );
+  }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={loadInsights} />
+      }
+    >
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>School Pulse</Text>
-        <Text style={styles.roleBadge}>{userRole.toUpperCase()}</Text>
+        <Text style={styles.title}>School Pulse Dashboard</Text>
+        <Text style={styles.subtitle}>Real-time analytics</Text>
       </View>
 
-      {/* Welcome Section */}
-      <View style={styles.welcomeCard}>
-        <Text style={styles.welcomeText}>{data.welcome}</Text>
-        <Text style={styles.subText}>Today: {new Date().toDateString()}</Text>
-      </View>
-
-      {/* Quick Stats */}
-      <View style={styles.statsContainer}>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{data.stats.pendingTasks || data.stats.pendingApprovals || data.stats.pendingRequests}</Text>
-          <Text style={styles.statLabel}>Pending</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{data.stats.completed || data.stats.meetings || data.stats.resolved}</Text>
-          <Text style={styles.statLabel}>Completed</Text>
-        </View>
-      </View>
-
-      {/* Tasks Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Today's Tasks</Text>
-        {data.tasks.map((task, index) => (
-          <TouchableOpacity key={index} style={styles.taskItem}>
-            <Text style={styles.taskText}>• {task}</Text>
-          </TouchableOpacity>
-        ))}
+      {/* Stats Grid */}
+      <View style={styles.statsGrid}>
+        <StatCard
+          title="Total Delays"
+          value={insights.summary.totalDelays}
+          color="#FF9500"
+        />
+        <StatCard
+          title="Infractions"
+          value={insights.summary.totalInfractions}
+          color="#FF3B30"
+        />
+        <StatCard
+          title="Positive Actions"
+          value={insights.summary.positiveActions}
+          color="#34C759"
+        />
+        <StatCard
+          title="Common Delay"
+          value={insights.summary.mostCommonDelayType || 'None'}
+          color="#5856D6"
+        />
       </View>
 
       {/* Action Buttons */}
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity 
-          style={styles.mainButton}
-          onPress={() => navigation.navigate('DelayLog')}
+      <View style={styles.actionsContainer}>
+        <TouchableOpacity
+          style={[styles.actionButton, { backgroundColor: '#007AFF' }]}
+          onPress={() => navigation.navigate('Report', { type: 'delay' })}
         >
-          <Text style={styles.buttonText}>Log Strategic Delay</Text>
+          <Text style={styles.actionButtonText}>📝 Report Delay</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={styles.secondaryButton}
-          onPress={() => navigation.navigate('InfractionLog')}
+        <TouchableOpacity
+          style={[styles.actionButton, { backgroundColor: '#34C759' }]}
+          onPress={() => navigation.navigate('Report', { type: 'infraction' })}
         >
-          <Text style={styles.buttonText}>Report Positive Action</Text>
+          <Text style={styles.actionButtonText}>✅ Report Infraction</Text>
         </TouchableOpacity>
 
-        {/* Admin Only Button */}
-        {userRole === 'administrator' || userRole === 'principal' ? (
-          <TouchableOpacity 
-            style={styles.adminButton}
-            onPress={() => navigation.navigate('AdminInsights')}
-          >
-            <Text style={styles.buttonText}>View Insights</Text>
-          </TouchableOpacity>
-        ) : null}
+        <TouchableOpacity
+          style={[styles.actionButton, { backgroundColor: '#5856D6' }]}
+          onPress={() => navigation.navigate('Insights')}
+        >
+          <Text style={styles.actionButtonText}>📊 View Insights</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Footer */}
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>School Pulse v1.0</Text>
+      {/* Quick Trends */}
+      <View style={styles.trendsSection}>
+        <Text style={styles.sectionTitle}>Recent Trends</Text>
+        
+        <View style={styles.trendItem}>
+          <Text style={styles.trendLabel}>Delays by Date:</Text>
+          {insights.trends.delaysByDate.slice(0, 3).map((item, index) => (
+            <Text key={index} style={styles.trendText}>
+              {item.timestamp}: {item.count} delays
+            </Text>
+          ))}
+        </View>
+
+        <View style={styles.trendItem}>
+          <Text style={styles.trendLabel}>Infractions by Category:</Text>
+          {insights.trends.infractionsByCategory.slice(0, 3).map((item, index) => (
+            <Text key={index} style={styles.trendText}>
+              {item.category}: {item.count}
+            </Text>
+          ))}
+        </View>
       </View>
     </ScrollView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  center: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
+  },
+  header: {
     padding: 20,
-    backgroundColor: '#4361ee',
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: 'white',
-  },
-  roleBadge: {
-    backgroundColor: 'white',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 15,
-    color: '#4361ee',
-    fontWeight: '600',
-    fontSize: 12,
-  },
-  welcomeCard: {
-    backgroundColor: 'white',
-    margin: 20,
-    padding: 20,
-    borderRadius: 15,
-    elevation: 3,
-  },
-  welcomeText: {
-    fontSize: 20,
-    fontWeight: '600',
     color: '#333',
-    marginBottom: 5,
   },
-  subText: {
-    color: '#666',
+  subtitle: {
     fontSize: 14,
+    color: '#666',
+    marginTop: 4,
   },
-  statsContainer: {
+  statsGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginHorizontal: 20,
-    marginBottom: 20,
+    flexWrap: 'wrap',
+    padding: 16,
+    justifyContent: 'space-between',
   },
   statCard: {
+    width: '48%',
     backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 15,
-    alignItems: 'center',
-    flex: 1,
-    marginHorizontal: 5,
-    elevation: 2,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  statNumber: {
+  statValue: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#4361ee',
+    color: '#333',
   },
-  statLabel: {
+  statTitle: {
+    fontSize: 14,
     color: '#666',
-    marginTop: 5,
+    marginTop: 4,
   },
-  section: {
+  actionsContainer: {
+    padding: 16,
+    gap: 12,
+  },
+  actionButton: {
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  actionButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  trendsSection: {
+    padding: 16,
     backgroundColor: 'white',
-    margin: 20,
-    padding: 20,
-    borderRadius: 15,
-    elevation: 3,
+    margin: 16,
+    borderRadius: 12,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: 'bold',
+    marginBottom: 16,
     color: '#333',
-    marginBottom: 15,
   },
-  taskItem: {
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+  trendItem: {
+    marginBottom: 16,
   },
-  taskText: {
-    color: '#555',
-    fontSize: 16,
-  },
-  buttonContainer: {
-    padding: 20,
-  },
-  mainButton: {
-    backgroundColor: '#4361ee',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  secondaryButton: {
-    backgroundColor: '#f72585',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  adminButton: {
-    backgroundColor: '#3a0ca3',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
+  trendLabel: {
     fontWeight: '600',
+    marginBottom: 8,
+    color: '#333',
   },
-  footer: {
-    alignItems: 'center',
-    padding: 20,
-    marginTop: 20,
-  },
-  footerText: {
-    color: '#999',
-    fontSize: 12,
+  trendText: {
+    color: '#666',
+    marginLeft: 8,
+    marginBottom: 4,
   },
 });
-
-export default DashboardScreen;

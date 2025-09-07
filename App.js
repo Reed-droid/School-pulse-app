@@ -1,37 +1,20 @@
+// (R) App.js (main app entry)
+import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import LoginScreen from './src/screens/LoginScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
-import DelayLogScreen from './src/screens/DelayLogScreen';
-import InfractionScreen from './src/screens/InfractionScreen';
+import ReportScreen from './src/screens/ReportScreen';
+import InsightsScreen from './src/screens/InsightsScreen';
 
 const Stack = createStackNavigator();
 
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
-        <Stack.Screen 
-          name="Login" 
-          component={LoginScreen} 
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen 
-          name="Dashboard" 
-          component={DashboardScreen} 
-          options={{ headerShown: false }}
-        />
-        {/* Add these two new screens */}
-        <Stack.Screen 
-          name="DelayLog" 
-          component={DelayLogScreen} 
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen 
-          name="InfractionLog" 
-          component={InfractionScreen} 
-          options={{ headerShown: false }}
-        />
+      <Stack.Navigator initialRouteName="Dashboard">
+        <Stack.Screen name="Dashboard" component={DashboardScreen} />
+        <Stack.Screen name="Report" component={ReportScreen} />
+        <Stack.Screen name="Insights" component={InsightsScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
