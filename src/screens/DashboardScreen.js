@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
 import { getInsights } from '../services/api';
 
-export default function DashboardScreen({ navigation }) {
+export default function DashboardScreen({ route, navigation }) {
   const [insights, setInsights] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const { userRole } = route.params || {};
 
   useEffect(() => {
     loadInsights();
@@ -17,7 +18,7 @@ export default function DashboardScreen({ navigation }) {
       setInsights(data);
     } catch (error) {
       console.error('Failed to load insights:', error);
-      alert('Failed to load dashboard data. Check backend connection.');
+      Alert.alert('Error', 'Failed to load dashboard data. Check backend connection.');
     } finally {
       setRefreshing(false);
     }
@@ -29,6 +30,17 @@ export default function DashboardScreen({ navigation }) {
       <Text style={styles.statTitle}>{title}</Text>
     </View>
   );
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Logout', onPress: () => navigation.replace('Login') }
+      ]
+    );
+  };
 
   if (!insights) {
     return (
@@ -45,10 +57,17 @@ export default function DashboardScreen({ navigation }) {
         <RefreshControl refreshing={refreshing} onRefresh={loadInsights} />
       }
     >
-      {/* Header */}
+      {/* Header with User Role and Logout */}
       <View style={styles.header}>
-        <Text style={styles.title}>School Pulse Dashboard</Text>
-        <Text style={styles.subtitle}>Real-time analytics</Text>
+        <View>
+          <Text style={styles.title}>School Pulse Dashboard</Text>
+          <Text style={styles.subtitle}>
+            Welcome, {userRole ? userRole.charAt(0).toUpperCase() + userRole.slice(1) : 'User'}!
+          </Text>
+        </View>
+        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+          <Text style={styles.logoutText}>Logout</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Stats Grid */}
@@ -79,21 +98,21 @@ export default function DashboardScreen({ navigation }) {
       <View style={styles.actionsContainer}>
         <TouchableOpacity
           style={[styles.actionButton, { backgroundColor: '#007AFF' }]}
-          onPress={() => navigation.navigate('Report', { type: 'delay' })}
+          onPress={() => navigation.navigate('Report', { type: 'delay', userRole })}
         >
           <Text style={styles.actionButtonText}>📝 Report Delay</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.actionButton, { backgroundColor: '#34C759' }]}
-          onPress={() => navigation.navigate('Report', { type: 'infraction' })}
+          onPress={() => navigation.navigate('Report', { type: 'infraction', userRole })}
         >
           <Text style={styles.actionButtonText}>✅ Report Infraction</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.actionButton, { backgroundColor: '#5856D6' }]}
-          onPress={() => navigation.navigate('Insights')}
+          onPress={() => navigation.navigate('Insights', { userRole })}
         >
           <Text style={styles.actionButtonText}>📊 View Insights</Text>
         </TouchableOpacity>
@@ -136,6 +155,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: 20,
     backgroundColor: 'white',
     borderBottomWidth: 1,
@@ -150,6 +172,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginTop: 4,
+  },
+  logoutButton: {
+    backgroundColor: '#FF3B30',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  logoutText: {
+    color: 'white',
+    fontWeight: '600',
   },
   statsGrid: {
     flexDirection: 'row',
