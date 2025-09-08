@@ -24,7 +24,7 @@ const LoginScreen = () => {
 
     setLoading(true);
     try {
-      // TODO: Replace with your actual backend API call
+      // TODO: Replace with actual backend API call
       const loginData = {
         email: email,
         password: password,
@@ -55,11 +55,10 @@ const LoginScreen = () => {
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
-          {/* Logo */}
-          <Image 
-            source={require('../../assets/icon.png')} 
-            style={styles.logo}
-          />
+          {/* Logo - Using placeholder instead of potentially missing icon */}
+          <View style={styles.logoPlaceholder}>
+            <Text style={styles.logoText}>🏫</Text>
+          </View>
           
           <Text style={styles.title}>School Pulse</Text>
           <Text style={styles.subtitle}>Secure Login Portal</Text>
@@ -143,10 +142,17 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
   },
-  logo: {
+  logoPlaceholder: {
     width: 80,
     height: 80,
+    backgroundColor: '#4361ee',
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 20,
+  },
+  logoText: {
+    fontSize: 40,
   },
   title: {
     fontSize: 28,
