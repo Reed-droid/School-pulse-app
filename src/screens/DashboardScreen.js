@@ -41,6 +41,36 @@ export default function DashboardScreen({ route, navigation }) {
       ]
     );
   };
+  // Add this function to your DashboardScreen.js (inside the component)
+const generateMockInsights = () => {
+  const insights = [
+    {
+      id: 1,
+      title: "📊 Resource Shortage Alert",
+      message: "Science Dept has 42% more resource delays than other departments",
+      severity: "high",
+      trend: "up",
+      suggestion: "Audit lab equipment on Monday"
+    },
+    {
+      id: 2, 
+      title: "⭐ Staff Excellence Spotting",
+      message: "Ms. Sharma reported 3 positive infractions this week - showing exceptional student care",
+      severity: "low",
+      trend: "neutral",
+      suggestion: "Consider for mentorship program"
+    },
+    {
+      id: 3,
+      title: "⏰ Morning Efficiency Drop",
+      message: "Wednesday mornings have 30% more admin delays compared to other days",
+      severity: "medium", 
+      trend: "down",
+      suggestion: "Reschedule admin meetings to afternoons"
+    }
+  ];
+  return insights;
+};
 
   if (!insights) {
     return (
@@ -48,6 +78,22 @@ export default function DashboardScreen({ route, navigation }) {
         <Text>Loading dashboard...</Text>
       </View>
     );
+    <View style={styles.insightsSection}>
+  <Text style={styles.insightsTitle}>AI Insights Live</Text>
+  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+    {generateMockInsights().map(insight => (
+      <View key={insight.id} style={[
+        styles.insightCard,
+        insight.severity === 'high' && styles.insightCardHigh,
+        insight.severity === 'medium' && styles.insightCardMedium
+      ]}>
+        <Text style={styles.insightTitle}>{insight.title}</Text>
+        <Text style={styles.insightMessage}>{insight.message}</Text>
+        <Text style={styles.insightSuggestion}>💡 {insight.suggestion}</Text>
+      </View>
+    ))}
+  </ScrollView>
+</View>
   }
 
   return (
