@@ -1,60 +1,36 @@
-import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import LoginScreen from './src/screens/LoginScreen';
-import DashboardScreen from './src/screens/DashboardScreen';
-import ReportScreen from './src/screens/ReportScreen';
-import InsightsScreen from './src/screens/InsightsScreen';
+import React from 'react'; // ← Make sure React is imported
+
+// LAZY LOAD screens to prevent initialization errors
+const LoginScreen = React.lazy(() => import('./src/screens/LoginScreen'));
+const DashboardScreen = React.lazy(() => import('./src/screens/DashboardScreen'));
+const DelayLogScreen = React.lazy(() => import('./src/screens/DelayLogScreen'));
+const InfractionScreen = React.lazy(() => import('./src/screens/InfractionScreen'));
 
 const Stack = createStackNavigator();
+
+// Simple loading component
+const LoadingScreen = () => (
+  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+    <Text>Loading...</Text>
+  </View>
+);
 
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator 
-        initialRouteName="Login"
-        screenOptions={{
-          headerShown: false, // Hide header for all screens
-          gestureEnabled: true,
-          animationEnabled: true
-        }}
-      >
-        {/* Login Screen - No header */}
-        <Stack.Screen 
-          name="Login" 
-          component={LoginScreen}
-        />
-        
-        {/* Dashboard - Optional: Show header if you want */}
-        <Stack.Screen 
-          name="Dashboard" 
-          component={DashboardScreen}
-          options={{
-            headerShown: true,
-            title: 'Dashboard',
-            headerBackTitle: 'Logout', // Shows "Logout" instead of "Back"
-          }}
-        />
-        
-        {/* Other screens - Optional headers */}
-        <Stack.Screen 
-          name="Report" 
-          component={ReportScreen}
-          options={{
-            headerShown: true,
-            title: 'Report Incident'
-          }}
-        />
-        
-        <Stack.Screen 
-          name="Insights" 
-          component={InsightsScreen}
-          options={{
-            headerShown: true,
-            title: 'Analytics Insights'
-          }}
-        />
-      </Stack.Navigator>
+      <React.Suspense fallback={<LoadingScreen />}>
+        <Stack.Navigator 
+          initialRouteName="Login"
+          screenOptions={{ headerShown: false }}
+        >
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Dashboard" component={DashboardScreen} />
+          <Stack.Screen name="DelayLog" component={DelayLogScreen} />
+          <Stack.Screen name="InfractionLog" component={InfractionScreen} />
+        </Stack.Navigator>
+      </React.Suspense>
     </NavigationContainer>
   );
 }
