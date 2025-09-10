@@ -1,300 +1,211 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
-import { getInsights } from '../services/api';
+// src/screens/DashboardScreen.js
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  RefreshControl,
+  StatusBar,
+} from "react-native";
+import {
+  getDashboardSummary,
+  getInsights,
+  testConnection,
+} from "../services/api";
 
-export default function DashboardScreen({ route, navigation }) {
-  const [insights, setInsights] = useState(null);
+export default function DashboardScreen() {
+  const [summary, setSummary] = useState({});
+  const [insights, setInsights] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
-  const { userRole } = route.params || {};
+  const [lastUpdated, setLastUpdated] = useState("");
+
+  const loadData = async () => {
+    try {
+      const summaryData = await getDashboardSummary();
+      setSummary(summaryData);
+
+      const insightsData = await getInsights();
+      setInsights(insightsData.insights);
+
+      await testConnection(); // just logs internally
+
+      setLastUpdated(new Date().toLocaleTimeString());
+    } catch (err) {
+      console.error("Error fetching data:", err);
+    }
+  };
 
   useEffect(() => {
-    loadInsights();
+    loadData();
   }, []);
 
-  const loadInsights = async () => {
-    try {
-      setRefreshing(true);
-      const data = await getInsights();
-      setInsights(data);
-    } catch (error) {
-      console.error('Failed to load insights:', error);
-      Alert.alert('Error', 'Failed to load dashboard data. Check backend connection.');
-    } finally {
-      setRefreshing(false);
-    }
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
   };
-
-  const StatCard = ({ title, value, color = '#007AFF' }) => (
-    <View style={[styles.statCard, { borderLeftColor: color }]}>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statTitle}>{title}</Text>
-    </View>
-  );
-
-  const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Logout', onPress: () => navigation.replace('Login') }
-      ]
-    );
-  };
-  // Add this function to your DashboardScreen.js (inside the component)
-const generateMockInsights = () => {
-  const insights = [
-    {
-      id: 1,
-      title: "📊 Resource Shortage Alert",
-      message: "Science Dept has 42% more resource delays than other departments",
-      severity: "high",
-      trend: "up",
-      suggestion: "Audit lab equipment on Monday"
-    },
-    {
-      id: 2, 
-      title: "⭐ Staff Excellence Spotting",
-      message: "Ms. Sharma reported 3 positive infractions this week - showing exceptional student care",
-      severity: "low",
-      trend: "neutral",
-      suggestion: "Consider for mentorship program"
-    },
-    {
-      id: 3,
-      title: "⏰ Morning Efficiency Drop",
-      message: "Wednesday mornings have 30% more admin delays compared to other days",
-      severity: "medium", 
-      trend: "down",
-      suggestion: "Reschedule admin meetings to afternoons"
-    }
-  ];
-  return insights;
-};
-
-  if (!insights) {
-    return (
-      <View style={styles.center}>
-        <Text>Loading dashboard...</Text>
-      </View>
-    );
-    <View style={styles.insightsSection}>
-  <Text style={styles.insightsTitle}>AI Insights Live</Text>
-  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-    {generateMockInsights().map(insight => (
-      <View key={insight.id} style={[
-        styles.insightCard,
-        insight.severity === 'high' && styles.insightCardHigh,
-        insight.severity === 'medium' && styles.insightCardMedium
-      ]}>
-        <Text style={styles.insightTitle}>{insight.title}</Text>
-        <Text style={styles.insightMessage}>{insight.message}</Text>
-        <Text style={styles.insightSuggestion}>💡 {insight.suggestion}</Text>
-      </View>
-    ))}
-  </ScrollView>
-</View>
-  }
 
   return (
-    <ScrollView
-      style={styles.container}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={loadInsights} />
-      }
-    >
-      {/* Header with User Role and Logout */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.title}>School Pulse Dashboard</Text>
-          <Text style={styles.subtitle}>
-            Welcome, {userRole ? userRole.charAt(0).toUpperCase() + userRole.slice(1) : 'User'}!
-          </Text>
-        </View>
-        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#1976D2" />
+
+      {/* Blue Header */}
+      <View style={styles.headerBar}>
+        <Text style={styles.headerText}>School Dashboard</Text>
       </View>
 
-      {/* Stats Grid */}
-      <View style={styles.statsGrid}>
-        <StatCard
-          title="Total Delays"
-          value={insights.summary.totalDelays}
-          color="#FF9500"
-        />
-        <StatCard
-          title="Infractions"
-          value={insights.summary.totalInfractions}
-          color="#FF3B30"
-        />
-        <StatCard
-          title="Positive Actions"
-          value={insights.summary.positiveActions}
-          color="#34C759"
-        />
-        <StatCard
-          title="Common Delay"
-          value={insights.summary.mostCommonDelayType || 'None'}
-          color="#5856D6"
-        />
-      </View>
+      {/* Main content */}
+      <ScrollView
+        style={styles.scrollContainer}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        <Text style={styles.subText}>
+          Last updated: {lastUpdated || "just now"}
+        </Text>
 
-      {/* Action Buttons */}
-      <View style={styles.actionsContainer}>
-        <TouchableOpacity
-          style={[styles.actionButton, { backgroundColor: '#007AFF' }]}
-          onPress={() => navigation.navigate('Report', { type: 'delay', userRole })}
-        >
-          <Text style={styles.actionButtonText}>📝 Report Delay</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.actionButton, { backgroundColor: '#34C759' }]}
-          onPress={() => navigation.navigate('Report', { type: 'infraction', userRole })}
-        >
-          <Text style={styles.actionButtonText}>✅ Report Infraction</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.actionButton, { backgroundColor: '#5856D6' }]}
-          onPress={() => navigation.navigate('Insights', { userRole })}
-        >
-          <Text style={styles.actionButtonText}>📊 View Insights</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Quick Trends */}
-      <View style={styles.trendsSection}>
-        <Text style={styles.sectionTitle}>Recent Trends</Text>
-        
-        <View style={styles.trendItem}>
-          <Text style={styles.trendLabel}>Delays by Date:</Text>
-          {insights.trends.delaysByDate.slice(0, 3).map((item, index) => (
-            <Text key={index} style={styles.trendText}>
-              {item.timestamp}: {item.count} delays
+        {/* Summary Cards */}
+        <View style={styles.summaryContainer}>
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Late Arrivals</Text>
+            <Text style={[styles.cardValue, { color: "#E53935" }]}>
+              {summary?.totalDelays ?? 0}
             </Text>
-          ))}
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Disciplinary Issues</Text>
+            <Text style={[styles.cardValue, { color: "#FB8C00" }]}>
+              {summary?.totalInfractions ?? 0}
+            </Text>
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Resolved Cases</Text>
+            <Text style={[styles.cardValue, { color: "#2E7D32" }]}>
+              {summary?.totalResolved ?? 0}
+            </Text>
+          </View>
         </View>
 
-        <View style={styles.trendItem}>
-          <Text style={styles.trendLabel}>Infractions by Category:</Text>
-          {insights.trends.infractionsByCategory.slice(0, 3).map((item, index) => (
-            <Text key={index} style={styles.trendText}>
-              {item.category}: {item.count}
-            </Text>
-          ))}
+        {/* Insights Section */}
+        <View style={styles.insightSection}>
+          <Text style={styles.sectionTitle}>Key Insights</Text>
+          {insights.length > 0 ? (
+            insights.map((item) => (
+              <View key={item.id} style={styles.insightCard}>
+                <Text style={styles.insightText}>
+                  {item.title}:{" "}
+                  <Text style={styles.insightValue}>{item.value}</Text>
+                </Text>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.noInsights}>No insights available</Text>
+          )}
         </View>
-      </View>
-    </ScrollView>
+
+        {/* Refresh Button */}
+        <TouchableOpacity style={styles.button} onPress={onRefresh}>
+          <Text style={styles.buttonText}>Refresh Data</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f9f9f9",
   },
-  center: {
+  headerBar: {
+    backgroundColor: "#1976D2",
+    paddingTop: 40, // space for status bar
+    paddingBottom: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 4,
+  },
+  headerText: {
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  scrollContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-  },
-  logoutButton: {
-    backgroundColor: '#FF3B30',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  logoutText: {
-    color: 'white',
-    fontWeight: '600',
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     padding: 16,
-    justifyContent: 'space-between',
   },
-  statCard: {
-    width: '48%',
-    backgroundColor: 'white',
+  subText: {
+    fontSize: 12,
+    color: "#666",
+    marginBottom: 16,
+    textAlign: "right",
+  },
+  summaryContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
+  card: {
+    flex: 1,
+    backgroundColor: "#fff",
+    marginHorizontal: 4,
     padding: 16,
     borderRadius: 12,
-    marginBottom: 16,
-    borderLeftWidth: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    alignItems: "center",
     elevation: 3,
   },
-  statValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  statTitle: {
+  cardTitle: {
     fontSize: 14,
-    color: '#666',
-    marginTop: 4,
+    color: "#555",
+    marginBottom: 6,
   },
-  actionsContainer: {
-    padding: 16,
-    gap: 12,
+  cardValue: {
+    fontSize: 22,
+    fontWeight: "bold",
   },
-  actionButton: {
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  actionButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  trendsSection: {
-    padding: 16,
-    backgroundColor: 'white',
-    margin: 16,
-    borderRadius: 12,
+  insightSection: {
+    marginBottom: 20,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    color: '#333',
+    fontWeight: "600",
+    marginBottom: 12,
+    color: "#333",
   },
-  trendItem: {
-    marginBottom: 16,
-  },
-  trendLabel: {
-    fontWeight: '600',
+  insightCard: {
+    backgroundColor: "#fff",
+    padding: 12,
+    borderRadius: 10,
     marginBottom: 8,
-    color: '#333',
+    elevation: 2,
   },
-  trendText: {
-    color: '#666',
-    marginLeft: 8,
-    marginBottom: 4,
+  insightText: {
+    fontSize: 14,
+    color: "#444",
+  },
+  insightValue: {
+    fontWeight: "bold",
+    color: "#1976D2",
+  },
+  noInsights: {
+    color: "#888",
+    fontStyle: "italic",
+  },
+  button: {
+    backgroundColor: "#1976D2",
+    padding: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    marginTop: 10,
+    marginBottom: 30,
+  },
+  buttonText: {
+    color: "#fff",
+    fontWeight: "bold",
   },
 });
