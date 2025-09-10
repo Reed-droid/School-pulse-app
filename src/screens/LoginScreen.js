@@ -24,20 +24,19 @@ const LoginScreen = () => {
 
     setLoading(true);
     try {
-      // TODO: Replace with actual backend API call
+      // Simulated login
       const loginData = {
-        email: email,
-        password: password,
+        email,
+        password,
         role: selectedRole,
         loginTime: new Date().toISOString()
       };
       
+      // Optional: remove console.log in production
       console.log('Logging in with:', loginData);
       
-      // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Pass role to dashboard for personalized experience
       navigation.replace('Dashboard', { userRole: selectedRole });
       
     } catch (error) {
@@ -55,9 +54,14 @@ const LoginScreen = () => {
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
-          {/* Logo - Using placeholder instead of potentially missing icon */}
-          <View style={styles.logoPlaceholder}>
-            <Text style={styles.logoText}>🏫</Text>
+          
+          {/* Updated Logo */}
+          <View style={styles.logoContainer}>
+            <Image 
+              source={require('../../assets/icon.png')} // Your white background logo
+              style={styles.logo}
+              resizeMode="contain"
+            />
           </View>
           
           <Text style={styles.title}>School Pulse</Text>
@@ -142,17 +146,22 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
   },
-  logoPlaceholder: {
-    width: 80,
-    height: 80,
-    backgroundColor: '#4361ee',
-    borderRadius: 40,
+  logoContainer: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 10,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
   },
-  logoText: {
-    fontSize: 40,
+  logo: {
+    width: 100,
+    height: 100,
   },
   title: {
     fontSize: 28,
